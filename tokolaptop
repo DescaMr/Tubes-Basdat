@@ -100,7 +100,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
---menghapus pesanan
+--menghapus data tabel pesanan
 CREATE OR REPLACE PROCEDURE delete_order(
   order_id INTEGER
 )
@@ -113,6 +113,41 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+--menghapus data tabel laptop
+CREATE OR REPLACE PROCEDURE delete_laptop(
+  laptop_id INTEGER
+)
+AS $$
+BEGIN
+  DELETE FROM laptops
+  WHERE id = laptops_id;
+  
+  COMMIT;
+END;
+$$ LANGUAGE plpgsql;
+
+--menghapus data tabel customer
+CREATE OR REPLACE PROCEDURE delete_customer(
+  customer_id INTEGER
+)
+AS $$
+BEGIN
+  DELETE FROM customers
+  WHERE id = customer_id;
+  
+  COMMIT;
+END;
+$$ LANGUAGE plpgsql;
+
+--menghapus data dari tabel order_details
+CREATE OR REPLACE PROCEDURE delete_order_detail(order_id INTEGER)
+AS $$
+BEGIN
+  DELETE FROM order_details WHERE id = order_id;
+END;
+$$ LANGUAGE plpgsql;
+
+
 --memanggil procedure
 --menambah data
 CALL add_customer('Kakasep', 'kakasep46@gmail.com');
@@ -121,11 +156,24 @@ CALL add_order(2,2,4, '2023-05-28');
 
 --mengedit data
 CALL update_customer(1,'narutong', 'narutong46@gmail.com');
-CALL update_laptop();
+CALL update_laptop(1,'ASUS','STRIX',30000000);
 
---menghapus order
+--menghapus data
+CALL delete_customer;
+CALL delete_laptop;
 CALL delete_order(2);
+CALL delete_order_detail(1);
 
+
+--membuat tabel baru untuk melihat detail dari tabel inner join
+CREATE TABLE order_details AS
+SELECT orders.id, customers.name AS customer_name, laptops.brand, laptops.model, orders.quantity, orders.order_date
+FROM orders
+INNER JOIN customers ON orders.customer_id = customers.id
+INNER JOIN laptops ON orders.laptop_id = laptops.id;
+
+--melihat data tabel
 select * from customers
 select * from laptops
 select * from orders
+select * from order_details
