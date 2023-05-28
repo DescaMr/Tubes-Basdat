@@ -172,6 +172,27 @@ FROM orders
 INNER JOIN customers ON orders.customer_id = customers.id
 INNER JOIN laptops ON orders.laptop_id = laptops.id;
 
+CREATE OR REPLACE PROCEDURE get_order_details()
+AS $$
+DECLARE
+  result_table TABLE (id INTEGER, name VARCHAR(100), brand VARCHAR(100), model VARCHAR(100), quantity INTEGER, order_date DATE);
+BEGIN
+  SELECT orders.id, customers.name, laptops.brand, laptops.model, orders.quantity, orders.order_date
+  INTO result_table
+  FROM orders
+  INNER JOIN customers ON orders.customer_id = customers.id
+  INNER JOIN laptops ON orders.laptop_id = laptops.id;
+  
+  -- Tampilkan hasil data
+  FOR row IN (SELECT * FROM result_table)
+  LOOP
+    RAISE NOTICE 'ID: %, Name: %, Brand: %, Model: %, Quantity: %, Order Date: %',
+                 row.id, row.name, row.brand, row.model, row.quantity, row.order_date;
+  END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
+
 --melihat data tabel
 select * from customers
 select * from laptops
