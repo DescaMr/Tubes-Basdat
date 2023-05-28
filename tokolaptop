@@ -1,200 +1,125 @@
---membuat tabel
-CREATE TABLE customers (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(100),
-  email VARCHAR(100)
+--studi kasus sederhana tentang riwayat pembelian toko laptop
+
+--membuat 3 tabel yaitu pelanggan,laptop dan transaksi
+CREATE TABLE Pelanggan (
+    id_pelanggan VARCHAR(5) PRIMARY KEY,
+    nama VARCHAR(45),
+    alamat VARCHAR(45)
 );
 
-CREATE TABLE laptops (
-  id SERIAL PRIMARY KEY,
-  brand VARCHAR(100),
-  model VARCHAR(100),
-  price NUMERIC(15, 2)
+CREATE TABLE Laptop (
+    id_laptop VARCHAR(5) PRIMARY KEY,
+    merk VARCHAR(20),
+    harga INTEGER
 );
 
-CREATE TABLE orders (
-  id SERIAL PRIMARY KEY,
-  customer_id INTEGER REFERENCES customers (id),
-  laptop_id INTEGER REFERENCES laptops (id),
-  quantity INTEGER,
-  order_date DATE
+CREATE TABLE Transaksi (
+    id_transaksi SERIAL PRIMARY KEY,
+    id_pelanggan VARCHAR,
+    id_laptop VARCHAR,
+	qty INTEGER,
+	tanggal DATE,
+    FOREIGN KEY (id_pelanggan) REFERENCES Pelanggan (id_pelanggan),
+    FOREIGN KEY (id_laptop) REFERENCES Laptop (id_laptop)
 );
 
---store procedure--
-
---menambah pelanggan baru
-CREATE OR REPLACE PROCEDURE add_customer(
-  customer_name VARCHAR(100),
-  customer_email VARCHAR(100)
+--stored procedure menambah data tabel pelanggan
+CREATE PROCEDURE tambah_data_pelanggan(
+    IN pelanggan_id VARCHAR(5),
+    IN pelanggan_nama VARCHAR(45),
+    IN pelanggan_alamat VARCHAR(45)
 )
-AS $$
+LANGUAGE PLPGSQL
+as $$
 BEGIN
-  INSERT INTO customers (name, email)
-  VALUES (customer_name, customer_email);
-  
-  COMMIT;
-END;
-$$ LANGUAGE plpgsql;
+    INSERT INTO Pelanggan (id_pelanggan, nama, alamat)
+    VALUES (pelanggan_id, pelanggan_nama, pelanggan_alamat);
+END; $$
 
---menambah laptop baru
-CREATE OR REPLACE PROCEDURE add_laptop(
-  laptop_brand VARCHAR(100),
-  laptop_model VARCHAR(100),
-  laptop_price NUMERIC(10, 2)
+--stored procedure tambah data laptop
+CREATE PROCEDURE tambah_data_laptop(
+    IN laptop_id VARCHAR(5),
+    IN laptop_merk VARCHAR(20),
+    IN laptop_harga INTEGER
 )
-AS $$
+LANGUAGE PLPGSQL
+as $$
 BEGIN
-  INSERT INTO laptops (brand, model, price)
-  VALUES (laptop_brand, laptop_model, laptop_price);
-  
-  COMMIT;
-END;
-$$ LANGUAGE plpgsql;
+    INSERT INTO Laptop (id_laptop, merk, harga)
+    VALUES (laptop_id, laptop_merk, laptop_harga);
+END; $$
 
---menambah pesanan baru
-CREATE OR REPLACE PROCEDURE add_order(
-  customer_id INTEGER,
-  laptop_id INTEGER,
-  order_quantity INTEGER,
-  order_date DATE
+--Stored Procedure menambahkan data transaksi
+CREATE OR REPLACE PROCEDURE tambah_data_transaksi(
+    IN transaksi_pelanggan_id VARCHAR(5),
+    IN transaksi_laptop_id VARCHAR(5),
+	IN transaksi_qty INTEGER,
+    IN transaksi_tanggal DATE
+	
 )
-AS $$
+LANGUAGE PLPGSQL
+as $$
 BEGIN
-  INSERT INTO orders (customer_id, laptop_id, quantity, order_date)
-  VALUES (customer_id, laptop_id, order_quantity, order_date);
-  
-  COMMIT;
-END;
-$$ LANGUAGE plpgsql;
+    INSERT INTO Transaksi (id_pelanggan, id_laptop, qty , tanggal)
+    VALUES (transaksi_pelanggan_id, transaksi_laptop_id, transaksi_qty , transaksi_tanggal);
+END;$$
 
---mengupdate pelanggan
-CREATE OR REPLACE PROCEDURE update_customer(
-  customer_id INTEGER,
-  customer_name VARCHAR(100),
-  customer_email VARCHAR(100)
+-- Stored procedure untuk menghapus data dari tabel Pelanggan berdasarkan id_pelanggan
+CREATE PROCEDURE hapus_data_pelanggan(
+    IN pelanggan_id VARCHAR(5)
 )
-AS $$
+LANGUAGE PLPGSQL
+as $$
 BEGIN
-  UPDATE customers
-  SET name = customer_name, email = customer_email
-  WHERE id = customer_id;
-  
-  COMMIT;
-END;
-$$ LANGUAGE plpgsql;
+    DELETE FROM Pelanggan WHERE id_pelanggan = pelanggan_id;
+END;$$
 
---mengupdate laptop
-CREATE OR REPLACE PROCEDURE update_laptop(
-  laptop_id INTEGER,
-  laptop_brand VARCHAR(100),
-  laptop_model VARCHAR(100),
-  laptop_price NUMERIC(10, 2)
+-- Stored procedure untuk menghapus data dari tabel Laptop berdasarkan id_laptop
+CREATE PROCEDURE hapus_data_laptop(
+    IN laptop_id VARCHAR(5)
 )
-AS $$
+LANGUAGE PLPGSQL
+as $$
 BEGIN
-  UPDATE laptops
-  SET brand = laptop_brand, model = laptop_model, price = laptop_price
-  WHERE id = laptop_id;
-  
-  COMMIT;
-END;
-$$ LANGUAGE plpgsql;
+    DELETE FROM Laptop WHERE id_laptop = laptop_id;
+END;$$
 
---menghapus data tabel pesanan
-CREATE OR REPLACE PROCEDURE delete_order(
-  order_id INTEGER
+-- Stored procedure untuk menghapus data dari tabel Transaksi berdasarkan id_transaksi
+CREATE PROCEDURE hapus_data_transaksi(
+    IN transaksi_id INT
 )
-AS $$
+LANGUAGE PLPGSQL
+as $$
 BEGIN
-  DELETE FROM orders
-  WHERE id = order_id;
-  
-  COMMIT;
-END;
-$$ LANGUAGE plpgsql;
+    DELETE FROM Transaksi WHERE id_transaksi = transaksi_id;
+END;$$
 
---menghapus data tabel laptop
-CREATE OR REPLACE PROCEDURE delete_laptop(
-  laptop_id INTEGER
+
+CREATE OR REPLACE FUNCTION get_transaksi_info()
+RETURNS TABLE (
+    id_transaksi integer,
+    nama_pelanggan varchar,
+    merk_laptop varchar,
+    harga integer,
+	qty integer,
+    tanggal date
 )
+LANGUAGE plpgsql
 AS $$
 BEGIN
-  DELETE FROM laptops
-  WHERE id = laptops_id;
-  
-  COMMIT;
-END;
-$$ LANGUAGE plpgsql;
+    RETURN QUERY
+    SELECT t.id_transaksi, p.nama AS nama_pelanggan, l.merk AS merk_laptop, l.harga AS harga_laptop, t.qty ,t.tanggal
+    FROM Transaksi t
+    JOIN Pelanggan p ON t.id_pelanggan = p.id_pelanggan
+    JOIN Laptop l ON t.id_laptop = l.id_laptop;
+END;$$
 
---menghapus data tabel customer
-CREATE OR REPLACE PROCEDURE delete_customer(
-  customer_id INTEGER
-)
-AS $$
-BEGIN
-  DELETE FROM customers
-  WHERE id = customer_id;
-  
-  COMMIT;
-END;
-$$ LANGUAGE plpgsql;
+drop function get_transaksi_info();
 
---menghapus data dari tabel order_details
-CREATE OR REPLACE PROCEDURE delete_order_detail(order_id INTEGER)
-AS $$
-BEGIN
-  DELETE FROM order_details WHERE id = order_id;
-END;
-$$ LANGUAGE plpgsql;
+--menginput data 
+CALL tambah_data_pelanggan('P0002','Deska','Cianjur')
+CALL tambah_data_laptop('A0002','ACER',6000000)
+CALL tambah_data_transaksi('P0002','A0002',1,'2023-05-08')
 
-
---memanggil procedure
---menambah data
-CALL add_customer('Kakasep', 'kakasep46@gmail.com');
-CALL add_laptop('LENOVO','THINKPAD',5000000);
-CALL add_order(2,2,4, '2023-05-28');
-
---mengedit data
-CALL update_customer(1,'narutong', 'narutong46@gmail.com');
-CALL update_laptop(1,'ASUS','STRIX',30000000);
-
---menghapus data
-CALL delete_customer;
-CALL delete_laptop;
-CALL delete_order(2);
-CALL delete_order_detail(1);
-
-
---membuat tabel baru untuk melihat detail dari tabel inner join
-CREATE TABLE order_details AS
-SELECT orders.id, customers.name AS customer_name, laptops.brand, laptops.model, orders.quantity, orders.order_date
-FROM orders
-INNER JOIN customers ON orders.customer_id = customers.id
-INNER JOIN laptops ON orders.laptop_id = laptops.id;
-
-CREATE OR REPLACE PROCEDURE get_order_details()
-AS $$
-DECLARE
-  result_table TABLE (id INTEGER, name VARCHAR(100), brand VARCHAR(100), model VARCHAR(100), quantity INTEGER, order_date DATE);
-BEGIN
-  SELECT orders.id, customers.name, laptops.brand, laptops.model, orders.quantity, orders.order_date
-  INTO result_table
-  FROM orders
-  INNER JOIN customers ON orders.customer_id = customers.id
-  INNER JOIN laptops ON orders.laptop_id = laptops.id;
-  
-  -- Tampilkan hasil data
-  FOR row IN (SELECT * FROM result_table)
-  LOOP
-    RAISE NOTICE 'ID: %, Name: %, Brand: %, Model: %, Quantity: %, Order Date: %',
-                 row.id, row.name, row.brand, row.model, row.quantity, row.order_date;
-  END LOOP;
-END;
-$$ LANGUAGE plpgsql;
-
-
---melihat data tabel
-select * from customers
-select * from laptops
-select * from orders
-select * from order_details
+SELECT * FROM get_transaksi_info();
+select * from Transaksi
