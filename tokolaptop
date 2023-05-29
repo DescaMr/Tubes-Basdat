@@ -1,5 +1,4 @@
 --studi kasus sederhana tentang riwayat pembelian toko laptop
-
 --membuat 3 tabel yaitu pelanggan,laptop dan transaksi
 CREATE TABLE Pelanggan (
     id_pelanggan VARCHAR(5) PRIMARY KEY,
@@ -94,7 +93,7 @@ BEGIN
     DELETE FROM Transaksi WHERE id_transaksi = transaksi_id;
 END;$$
 
-
+--Function untuk mengembalikan hasil query menggabungkan data dari pelanggan , laptop dan transaksi
 CREATE OR REPLACE FUNCTION get_transaksi_info()
 RETURNS TABLE (
     id_transaksi integer,
@@ -108,7 +107,8 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
     RETURN QUERY
-    SELECT t.id_transaksi, p.nama AS nama_pelanggan, l.merk AS merk_laptop, l.harga AS harga_laptop, t.qty ,t.tanggal
+    SELECT t.id_transaksi, p.nama AS nama_pelanggan, 
+	l.merk AS merk_laptop, l.harga AS harga_laptop, t.qty ,t.tanggal
     FROM Transaksi t
     JOIN Pelanggan p ON t.id_pelanggan = p.id_pelanggan
     JOIN Laptop l ON t.id_laptop = l.id_laptop;
@@ -117,9 +117,19 @@ END;$$
 drop function get_transaksi_info();
 
 --menginput data 
-CALL tambah_data_pelanggan('P0002','Deska','Cianjur')
-CALL tambah_data_laptop('A0002','ACER',6000000)
-CALL tambah_data_transaksi('P0002','A0002',1,'2023-05-08')
+CALL tambah_data_pelanggan('P0001','Deska','Cianjur')
+CALL tambah_data_laptop('A0001','ASUS',6000000)
+CALL tambah_data_transaksi('P0001','A0001',1,'2023-05-08')
 
+--menghapus data
+CALL hapus_data_pelanggan('P0002')
+CALL hapus_data_laptop('P0002')
+CALL hapus_data_transaksi(1)
+
+--memanggil semua kolom dan baris data pada tabel
+SELECT * FROM Pelanggan
+SELECT * FROM Laptop
+SELECT * FROM Transaksi
+
+--memanggil function yang telah dibuat
 SELECT * FROM get_transaksi_info();
-select * from Transaksi
